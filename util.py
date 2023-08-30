@@ -80,8 +80,12 @@ class INFO_CUTEST_RESULT(INFO_CUTEST):
     METHODS_RENAMING = {
         "DRSOM": r"\drsom",
         "NewtonTR": r"\newtontr",
+        "TRST": r"\newtontrst",
         "HSODM": r"\hsodm",
         "HSODMhvp": r"\hsodmhvp",
+        "UTR": r"\utr",
+        "iUTR": r"\iutr",
+        "iUTRhvp": r"\iutrhvp",
         "DRSOMHomo": r"\drsomh",
         "HSODMArC": r"\hsodmarc",
         "LBFGS": r"\lbfgs",
@@ -93,8 +97,12 @@ class INFO_CUTEST_RESULT(INFO_CUTEST):
     METHODS_RENAMING_REV = {
         "\\drsom": "DRSOM",
         "\\newtontr": "Newton-TR",
+        "\\newtontrst": "Newton-TR-STCG",
         "\\hsodm": "HSODM",
         "\\hsodmhvp": "HSODM-HVP",
+        "\\utr": "UTR",
+        "\\iutr": "iUTR(Hessian)",
+        "\\iutrhvp": "iUTR",
         "\\lbfgs": "LBFGS",
         "\\cg": "CG",
         "\\arc": "ARC",
@@ -128,10 +136,14 @@ class INFO_CUTEST_RESULT(INFO_CUTEST):
 \newcommand{\drsomh}{\textrm{DRSOM-H}}
 \newcommand{\lbfgs}{\textrm{LBFGS}}
 \newcommand{\newtontr}{\textrm{Newton-TR}}
+\newcommand{\newtontrst}{\textrm{Newton-TR-STCG}}
 \newcommand{\cg}{\textrm{CG}}
 \newcommand{\arc}{\textrm{ARC}}
 \newcommand{\itrace}{\textrm{TRACE}}
 \newcommand{\gd}{\textrm{GD}}
+\newcommand{\utr}{\textrm{UTR}}
+\newcommand{\iutr}{\textrm{iUTR(Hessian)}}
+\newcommand{\iutrhvp}{\textrm{iUTR}}
 
 \begin{document}
 
@@ -140,6 +152,7 @@ class INFO_CUTEST_RESULT(INFO_CUTEST):
     \input{perf.geo}
     \clearpage
     \input{perf}
+    \clearpage
     \input{perf.history}
     \scriptsize
     \clearpage

@@ -19,7 +19,6 @@ AGG_RESULT = f"""
              avg(kg)     as kfg,
              avg(kh)     as kfh
       from ranked_messages
-      {FILTER}
       group by method, rn)
          as t
          left join (select method,
@@ -30,14 +29,12 @@ AGG_RESULT = f"""
                            exp(avg(ln(if(status = 0, 20000, kg) + 50))) - 50 as kgg,
                            exp(avg(ln(if(status = 0, 20000, kh) + 50))) - 50 as kgh
                     from ranked_messages
-                    {FILTER}
                     group by method, rn) as tt
                    on tt.method = t.method and tt.version = t.version
-      
 """
 RANKING = f"""WITH ranked_messages AS (
     SELECT m.*, ROW_NUMBER() OVER (PARTITION BY name,param,method ORDER BY `update` DESC) AS rn
-    FROM cutest.result AS m where method not in {UNSELECT_METHOD})
+    FROM cutest.result AS m {FILTER})
 """
 # from sql
 # query last
@@ -45,24 +42,23 @@ sql_query_all = f"""
     {RANKING}
     select *
     from ranked_messages
-    {FILTER}
-    and rn = 1
-    and method not in {UNSELECT_METHOD};
+    where rn = 1;
     """
 df = pd.read_sql(
     sql_query_all,
     con=engine,
 ).set_index(["name", "n", "method"])
+df = df[~df.index.duplicated(keep='first')]
 
 version_number = int(df["update"].max().timestamp() / 100)
 fdir = f"./{version_number}"
 if not os.path.exists(fdir):
     os.mkdir(fdir)
 # stack view
-dfa = df[INFO_CUTEST_RESULT.COLUMNS_PERF].unstack(level=-1)
+# dfa = df[INFO_CUTEST_RESULT.COLUMNS_PERF].unstack(level=-1)
 
 # to latex tables
-dfl = df[INFO_CUTEST_RESULT.COLUMNS_PERF].assign(
+dfl = df[INFO_CUTEST_RESULT.COLUMNS_PERF].drop_duplicates().assign(
     # fix entry formats
     **{
         k: df[k].apply(v)
@@ -105,9 +101,9 @@ select t.method,
        tt.kg,
        tt.kgf,
        tt.kgg,
-       tt.kgh
+       tt.kgh,
+       tt.version
 from {AGG_RESULT}
-where tt.version=1;
     """,
     con=engine,
 ).set_index(["method"])
@@ -249,20 +245,24 @@ layout = go.Layout(
 df_b = (
     df.reset_index()
     .rename(columns={"t": "tsf"})
-    .assign(t=lambda df: df["tsf"].apply(lambda x: max(x, 1)))
+    .assign(t=lambda df: df["tsf"].apply(lambda x: max(x, 0.0001)))
     .groupby(["name", "n"])
-    .agg({"k": min, "t": min})
-    .rename(columns={"k": "kb", "t": "tb"})
+    .agg({"k": min, "t": min, "kg": min})
+    .rename(columns={"k": "kb", "t": "tb", "kg": "gb"})
 )
 
 df_rho = (
     df.query("status==1")
     .join(df_b)
-    .assign(rho_k=lambda df: df["k"] / df["kb"], rho_t=lambda df: df["t"] / df["tb"])
+    .assign(
+    rho_k=lambda df: df["k"] / df["kb"],
+    rho_t=lambda df: df["t"] / df["tb"],
+    rho_g=lambda df: df["kg"] / df["gb"]
+    )
 )
 scale = df_rho.reset_index().groupby("method").status.sum().max()
 methods = df_rho.index.get_level_values(2).unique().to_list()
-metrics = {"rho_k": "k", "rho_t": "t"}
+metrics = {"rho_k": "k", "rho_t": "t", "rho_g": "g"}
 for m in metrics:
     data = []
     for method in methods:
@@ -273,7 +273,7 @@ for m in metrics:
             x=dist.index,
             y=dist.values,
             name=INFO_CUTEST_RESULT.METHODS_RENAMING_REV[method],
-            line=dict(width=1.5),
+            line=dict(width=3),
         )
         print(m, method)
         data.append(line)
@@ -291,6 +291,7 @@ for m in metrics:
     fig.update_xaxes(style_grid)
     fig.update_yaxes(style_grid)
     fig.write_image(f"{version_number}/{version_number}-{m}.png", scale=3)
+    fig.write_image(f"{version_number}/{version_number}-{m}.pdf", scale=3)
     fig.write_html(f"{version_number}/{version_number}-{m}.html")
 
 ##############################################################################################
