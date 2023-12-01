@@ -5,7 +5,7 @@
 # 1. HSODF Paper
 # UNSELECT_METHOD = r"('\\lbfgs', '\\drsomh', '\\hsodmarc', '\\gd', '\\cg', '\\drsom')"
 # 2. UTR Paper
-UNSELECT_METHOD = r"('\\lbfgs', '\\drsomh', '\\hsodmarc', '\\gd', '\\cg', '\\drsom', '\\hsodm', '\\hsodmhvp', '\\utr', '\\newtontr')"
+UNSELECT_METHOD = r"('\\lbfgs', '\\drsomh', '\\hsodmarc', '\\gd', '\\cg', '\\drsom', '\\hsodm', '\\hsodmhvp', '\\utr', '\\newtontr', '\\iutr')"
 
 # filter the results satisfying the following condition...
 OPTION = int(input("small: 1; large: 0\n"))
