@@ -7,7 +7,7 @@ from sqlalchemy import create_engine
 # utility funcs
 def convert_to_int_else_slash(x):
     try:
-        return int(np.floor(x)).__str__()
+        return "\\texttt{" + int(np.floor(x)).__str__() + "}"
     except:
         return "-"
 
@@ -23,7 +23,11 @@ def scaled_gmean(arr, scale=10):
 class CUTEST_UTIL:
     @staticmethod
     def establish_connection():
-        engine = create_engine("mysql://root@127.0.0.1:3306", echo=True)
+        # engine = create_engine("mysql+pymysql://root@127.0.0.1:3306", echo=True)
+        engine = create_engine(
+            "mysql+pymysql://chuwen:931017@127.0.0.1:3306", echo=True
+        )
+
         trans = engine.begin()
         return engine, trans
 
@@ -72,10 +76,13 @@ class INFO_CUTEST_RESULT(INFO_CUTEST):
         "tg": "$\\overline t_G$",
     }
     COLUMNS_FULL_TABLE_LATEX_WT_FORMATTER = {
+        # "name": lambda x: "\\texttt{" + x + "}",
+        # "n": convert_to_int_else_slash,
         "k": convert_to_int_else_slash,
-        "df": lambda x: f"{np.nan_to_num(x, np.inf):.1e}",
-        "fx": lambda x: f"{np.nan_to_num(x, np.inf):.1e}",
-        "t": lambda x: f"{np.nan_to_num(x, np.inf):.1e}",
+        "kg": convert_to_int_else_slash,
+        "df": lambda x: "\\texttt{" + f"{np.nan_to_num(x, np.inf):.1e}" + "}",
+        "fx": lambda x: "\\texttt{" + f"{np.nan_to_num(x, np.inf):+.1e}" + "}",
+        "t": lambda x: "\\texttt{" + f"{np.nan_to_num(x, np.inf):.1e}" + "}",
     }
     METHODS_RENAMING = {
         "DRSOM": r"\drsom",
@@ -99,13 +106,15 @@ class INFO_CUTEST_RESULT(INFO_CUTEST):
         "\\newtontr": "Newton-TR",
         "\\newtontrst": "Newton-TR-STCG",
         "\\hsodm": "HSODM",
-        "\\hsodmhvp": "HSODM-HVP",
+        "\\hsodmhvp": "Adaptive-HSODM",
+        # "\\hsodmhvp": "HSODM-HVP",
         "\\utr": "UTR",
         "\\iutr": "iUTR(Hessian)",
         "\\iutrhvp": "iUTR",
         "\\lbfgs": "LBFGS",
         "\\cg": "CG",
-        "\\arc": "ARC",
+        # "\\arc": "ARC",
+        "\\arc": "Cubic-Reg",
         "\\gd": "GD",
     }
 
@@ -118,9 +127,16 @@ class INFO_CUTEST_RESULT(INFO_CUTEST):
                 columns=INFO_CUTEST_RESULT.COLUMNS_RENAMING,
             )
             .swaplevel(0, 1, 1)
-            .sort_index(1)
+            .sort_index()
+            .fillna("-")
             .to_latex(
-                longtable=True, escape=False, caption=caption, label=label, buf=path
+                longtable=True,
+                escape=False,
+                caption=caption,
+                multicolumn=True,
+                label=label,
+                buf=path,
+                float_format="\texttt{%+.2f}",
             )
         )
 

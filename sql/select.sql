@@ -14,7 +14,7 @@ from ranked_messages
 where k <= 5000
   and status = 1
   and t <= 100
-#   and n <= 200
+  and n <= 200
   and rn = 1
   and `precision` = 1e-5
   and method in ('\\hsodm', '\\lbfgs', '\\newtontr', '\\arc')

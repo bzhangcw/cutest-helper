@@ -48,7 +48,7 @@ df = pd.read_sql(
     sql_query_all,
     con=engine,
 ).set_index(["name", "n", "method"])
-df = df[~df.index.duplicated(keep='first')]
+df = df[~df.index.duplicated(keep="first")]
 
 version_number = int(df["update"].max().timestamp() / 100)
 fdir = f"./{version_number}"
@@ -58,17 +58,21 @@ if not os.path.exists(fdir):
 # dfa = df[INFO_CUTEST_RESULT.COLUMNS_PERF].unstack(level=-1)
 
 # to latex tables
-dfl = df[INFO_CUTEST_RESULT.COLUMNS_PERF].drop_duplicates().assign(
-    # fix entry formats
-    **{
-        k: df[k].apply(v)
-        for k, v in INFO_CUTEST_RESULT.COLUMNS_FULL_TABLE_LATEX_WT_FORMATTER.items()
-    }
+dfl = (
+    df[INFO_CUTEST_RESULT.COLUMNS_PERF]
+    .drop_duplicates()
+    .assign(
+        # fix entry formats
+        **{
+            k: df[k].apply(v)
+            for k, v in INFO_CUTEST_RESULT.COLUMNS_FULL_TABLE_LATEX_WT_FORMATTER.items()
+        }
+    )
 )
 dfl_stacked = dfl.unstack(level=-1)
 latex_full_table_str1 = INFO_CUTEST_RESULT.produce_latex_long_table(
     dfl_stacked,
-    ["k", "t"],
+    ["k", "kg", "t"],
     caption="Complete Results on CUTEst Dataset, iteration \& time",
     label="tab.cutest.kt",
     path=os.path.join(fdir, "complete.kt.tex"),
@@ -245,35 +249,59 @@ layout = go.Layout(
 df_b = (
     df.reset_index()
     .rename(columns={"t": "tsf"})
-    .assign(t=lambda df: df["tsf"].apply(lambda x: max(x, 0.0001)))
+    .assign(
+        t=lambda df: df["tsf"].apply(lambda x: max(x, 0.0001)),
+        # for hsodm, we use 1000000 as the gradient evaluations since it is not inexact
+        kg=lambda df: df.apply(
+            lambda row: row["kg"] if row["method"] != "\\hsodm" else 1000000, axis=1
+        ),
+    )
     .groupby(["name", "n"])
     .agg({"k": min, "t": min, "kg": min})
     .rename(columns={"k": "kb", "t": "tb", "kg": "gb"})
 )
 
+
+# truncate < 5
 df_rho = (
     df.query("status==1")
     .join(df_b)
     .assign(
-    rho_k=lambda df: df["k"] / df["kb"],
-    rho_t=lambda df: df["t"] / df["tb"],
-    rho_g=lambda df: df["kg"] / df["gb"]
+        rho_k=lambda df: (df["k"] / df["kb"]).apply(lambda x: max(x, 1)),
+        rho_t=lambda df: (df["t"] / df["tb"]).apply(lambda x: max(x, 1)),
+        rho_g=lambda df: (df["kg"] / df["gb"]).apply(lambda x: max(x, 1)),
     )
 )
-scale = df_rho.reset_index().groupby("method").status.sum().max()
+# scale = df_rho.reset_index().groupby("method").status.sum().max()
 methods = df_rho.index.get_level_values(2).unique().to_list()
 metrics = {"rho_k": "k", "rho_t": "t", "rho_g": "g"}
+metrics_skip = {"rho_g": ["\\hsodm"]}
+methods_sort_weight = {
+    "\\arc": 0,
+    "\\newtontrst": 1,
+    "\\hsodmhvp": 99,
+    "\\hsodm": 100,
+}
+methods = sorted(methods, key=lambda x: methods_sort_weight.get(x, 0))
 for m in metrics:
     data = []
+    all_index = df_rho[m].droplevel(2).index.unique()
+    scale = all_index.size
     for method in methods:
+        if method in metrics_skip.get(m, []):
+            continue
         sr = df_rho[m][:, :, method]
         dist = sr.reset_index().groupby(m).count().cumsum()["n"]
         dist = dist / scale
+        dist[100000.0] = dist.values.max()
+        x = dist.index.values
+        y = dist.values
         line = go.Line(
-            x=dist.index,
-            y=dist.values,
+            x=x,
+            y=y,
             name=INFO_CUTEST_RESULT.METHODS_RENAMING_REV[method],
             line=dict(width=3),
+            mode="lines",
         )
         print(m, method)
         data.append(line)
@@ -290,8 +318,8 @@ for m in metrics:
     )
     fig.update_xaxes(style_grid)
     fig.update_yaxes(style_grid)
-    fig.write_image(f"{version_number}/{version_number}-{m}.png", scale=3)
-    fig.write_image(f"{version_number}/{version_number}-{m}.pdf", scale=3)
+    fig.write_image(f"{version_number}/{version_number}-{m}.png", scale=5)
+    fig.write_image(f"{version_number}/{version_number}-{m}.pdf", scale=5)
     fig.write_html(f"{version_number}/{version_number}-{m}.html")
 
 ##############################################################################################
@@ -301,5 +329,5 @@ print(f"results dump to: \n {version_number}/{version_number}_view.tex")
 print(
     f"compile using: \n latexmk -xelatex -cd  {version_number}/{version_number}_view.tex"
 )
-
+print(f"total number instances selected: {scale}")
 print("*" * 50)

@@ -2,13 +2,17 @@
 
 # un-picked methods in the following
 # e.g. second-order method only...
+# 0. HSODM Paper
+# UNSELECT_METHOD = r"('\\lbfgs', '\\drsomh', '\\hsodmarc', '\\gd', '\\cg', '\\drsom', '\\utr', '\\newtontr', '\\iutr', '\\iutrhvp')"
+
 # 1. HSODF Paper
-# UNSELECT_METHOD = r"('\\lbfgs', '\\drsomh', '\\hsodmarc', '\\gd', '\\cg', '\\drsom')"
+UNSELECT_METHOD = r"('\\lbfgs', '\\drsomh', '\\hsodmarc', '\\hsodm', '\\gd', '\\cg', '\\drsom', '\\utr', '\\newtontr', '\\iutr', '\\iutrhvp')"
+
 # 2. UTR Paper
-UNSELECT_METHOD = r"('\\lbfgs', '\\drsomh', '\\hsodmarc', '\\gd', '\\cg', '\\drsom', '\\hsodm', '\\hsodmhvp', '\\utr', '\\newtontr', '\\iutr')"
+# UNSELECT_METHOD = r"('\\lbfgs', '\\drsomh', '\\hsodmarc', '\\gd', '\\cg', '\\drsom', '\\hsodm', '\\hsodmhvp', '\\utr', '\\newtontr', '\\iutr')"
 
 # filter the results satisfying the following condition...
-OPTION = int(input("small: 1; large: 0\n"))
+OPTION = False
 if OPTION:
     FILTER = f"""
     where n <= 200
@@ -19,4 +23,9 @@ else:
     FILTER = f"""
         where `precision` = 1e-5
             and method not in {UNSELECT_METHOD}
+            and n>=500
     """
+    # FILTER = f"""
+    #     where `precision` = 1e-5
+    #         and method not in {UNSELECT_METHOD}
+    # """
