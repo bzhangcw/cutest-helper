@@ -275,7 +275,7 @@ df_rho = (
 # scale = df_rho.reset_index().groupby("method").status.sum().max()
 methods = df_rho.index.get_level_values(2).unique().to_list()
 metrics = {"rho_k": "k", "rho_t": "t", "rho_g": "g"}
-metrics_skip = {"rho_g": ["\\hsodm"]}
+metrics_skip = {"rho_g": ["\\hsodm", "\\galahadarcdir"]}
 methods_sort_weight = {
     "\\arc": 0,
     "\\newtontrst": 1,

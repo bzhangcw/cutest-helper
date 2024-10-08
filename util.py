@@ -24,8 +24,11 @@ class CUTEST_UTIL:
     @staticmethod
     def establish_connection():
         # engine = create_engine("mysql+pymysql://root@127.0.0.1:3306", echo=True)
+        # engine = create_engine(
+        #     "mysql+pymysql://chuwen:931017@127.0.0.1:3306", echo=True
+        # )
         engine = create_engine(
-            "mysql+pymysql://chuwen:931017@127.0.0.1:3306", echo=True
+            "mysql+pymysql://root:19931017@127.0.0.1:3306", echo=True
         )
 
         trans = engine.begin()
@@ -116,6 +119,8 @@ class INFO_CUTEST_RESULT(INFO_CUTEST):
         # "\\arc": "ARC",
         "\\arc": "Cubic-Reg",
         "\\gd": "GD",
+        "\\galahadarc": "Cubic-Reg (GALAHAD)",
+        "\\galahadarcdir": "Cubic-Reg (GALAHAD); Direct-Solver",
     }
 
     @staticmethod
@@ -160,6 +165,7 @@ class INFO_CUTEST_RESULT(INFO_CUTEST):
 \newcommand{\utr}{\textrm{UTR}}
 \newcommand{\iutr}{\textrm{iUTR(Hessian)}}
 \newcommand{\iutrhvp}{\textrm{iUTR}}
+\newcommand{\galahadarc}{\textrm{ARC (GALAHAD)}}
 
 \begin{document}
 
